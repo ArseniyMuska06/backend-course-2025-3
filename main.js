@@ -6,7 +6,9 @@ const program = new Command();
 program
   .option('-i, --input <path>', 'шлях до вхідного JSON-файлу')
   .option('-o, --output <path>', 'шлях до вихідного файлу')
-  .option('-d, --display', 'вивести результат у консоль');
+  .option('-d, --display', 'вивести результат у консоль')
+  .option('-f, --furnished', 'відображати лише будинки зі статусом "furnished"')
+  .option('-p, --price <number>', 'відображати лише будинки з ціною меншою за вказану');
 
 program.parse(process.argv);
 
@@ -31,7 +33,22 @@ try {
   process.exit(1);
 }
 
-const result = JSON.stringify(data, null, 2);
+let filteredData = data;
+
+if (options.furnished) {
+  filteredData = filteredData.filter(item => item.furnishingstatus === 'furnished');
+}
+
+if (options.price) {
+  const maxPrice = Number(options.price);
+  if (isNaN(maxPrice)) {
+    console.error('Помилка: значення параметра --price має бути числом');
+    process.exit(1);
+  }
+  filteredData = filteredData.filter(item => Number(item.price) < maxPrice);
+}
+
+const result = filteredData.map(item => `${item.price} ${item.area}`).join('\n');
 
 if (!options.output && !options.display) {
   process.exit(0);
